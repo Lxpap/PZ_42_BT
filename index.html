@@ -203,7 +203,7 @@ const DATA_UUID   = '12345678-1234-1234-1234-123456789ab1';
 const STATUS_UUID = '12345678-1234-1234-1234-123456789ab2';
 
 const TARGET_W = 400, TARGET_H = 300;
-const CHUNK    = 512;
+const CHUNK    = 200;
 
 // ─── State ────────────────────────────────────────────────────────────────
 let device=null, server=null, charAuth=null, charData=null, charStatus=null;
@@ -246,19 +246,19 @@ async function sendChunked(bytes, name){
   const firstChunk=new Uint8Array(headerBytes.length+firstData.length);
   firstChunk.set(headerBytes); firstChunk.set(firstData, headerBytes.length);
 
-  await charData.writeValueWithoutResponse(firstChunk);
+  await charData.writeValueWithResponse(firstChunk);
   log(`Sent header + ${firstData.length}b`);
+  await new Promise(r=>setTimeout(r,100));
 
   let offset=firstData.length;
   while(offset<bytes.length){
     const chunk=bytes.slice(offset, offset+CHUNK);
-    await charData.writeValueWithoutResponse(chunk);
+    await charData.writeValueWithResponse(chunk);
     offset+=chunk.length;
     const pct=Math.round(offset*100/bytes.length);
     document.getElementById('progressFill').style.width=pct+'%';
     document.getElementById('progressLabel').textContent=pct+'% ('+offset+' / '+bytes.length+' bytes)';
-    // Small yield to keep UI alive
-    await new Promise(r=>setTimeout(r,10));
+    await new Promise(r=>setTimeout(r,50));
   }
   log('All chunks sent');
 }
