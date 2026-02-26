@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>ProjectZero</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #4f8ef7;
+    --accent2: #7c3aed;
+    --text: #f0f0f0;
+    --muted: #888;
+    --success: #22c55e;
+    --error: #ef4444;
+    --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    width: 100%;
+    max-width: 400px;
+  }
+  .bt-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 20px; font-weight: 700; }
+  header p { font-size: 12px; color: var(--muted); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 16px;
+  }
+  .card h2 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; }
+
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 14px;
+    border-radius: 12px; border: none; cursor: pointer;
+    font-size: 15px; font-weight: 600;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn:active { transform: scale(.97); opacity: .85; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  .btn-danger { background: var(--error); color: #fff; }
+  .btn-success { background: var(--success); color: #fff; }
+
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; margin-right: 6px;
+  }
+  .dot-off { background: var(--muted); }
+  .dot-on  { background: var(--success); animation: pulse 1.5s infinite; }
+  .dot-busy{ background: var(--warn); animation: pulse .8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .status-row {
+    display: flex; align-items: center;
+    font-size: 14px; color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .status-row span { color: var(--text); font-weight: 500; }
+
+  /* PIN chooser */
+  .pin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .pin-btn {
+    background: var(--border);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 18px 8px;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    text-align: center;
+    transition: border-color .15s, background .15s;
+  }
+  .pin-btn:hover { border-color: var(--accent); background: #222; }
+  .pin-btn.selected { border-color: var(--accent); background: #1a2a4a; }
+  .pin-btn.correct { border-color: var(--success); background: #0f2a1a; }
+  .pin-btn.wrong   { border-color: var(--error);   background: #2a0f0f; }
+
+  /* File pick */
+  #fileInput { display: none; }
+  .file-label {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 28px 16px;
+    cursor: pointer;
+    font-size: 14px; color: var(--muted);
+    transition: border-color .15s;
+    text-align: center;
+  }
+  .file-label:hover { border-color: var(--accent); color: var(--text); }
+  .file-selected { border-color: var(--accent); color: var(--text); background: #1a1f2e; }
+
+  /* Progress */
+  .progress-wrap { margin-top: 12px; }
+  .progress-bar-bg {
+    background: var(--border);
+    border-radius: 999px; height: 8px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 8px; border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width .2s;
+    width: 0%;
+  }
+  .progress-label { font-size: 12px; color: var(--muted); margin-top: 6px; text-align: right; }
+
+  /* Log */
+  .log {
+    background: #0a0a0a;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 11px;
+    font-family: monospace;
+    color: var(--muted);
+    max-height: 120px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .hidden { display: none !important; }
+  .mt8 { margin-top: 8px; }
+  .mt12 { margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bt-icon">⬡</div>
+  <div>
+    <h1>ProjectZero</h1>
+    <p>Bluetooth file transfer</p>
+  </div>
+</header>
+
+<!-- Connection card -->
+<div class="card" id="cardConnect">
+  <h2>Device</h2>
+  <div class="status-row">
+    <span class="status-dot dot-off" id="connDot"></span>
+    <span id="connLabel">Not connected</span>
+  </div>
+  <button class="btn btn-primary" id="btnConnect">Connect to ProjectZero</button>
+</div>
+
+<!-- PIN card -->
+<div class="card hidden" id="cardPin">
+  <h2>Verify — tap the code shown on the device screen</h2>
+  <div class="pin-grid" id="pinGrid"></div>
+  <p class="mt12" style="font-size:12px;color:var(--muted)" id="pinHint">Choose carefully — wrong answer disconnects.</p>
+</div>
+
+<!-- File card -->
+<div class="card hidden" id="cardFile">
+  <h2>Send image</h2>
+  <label class="file-label" for="fileInput" id="fileLabel">
+    📷 Tap to choose a photo
+  </label>
+  <input type="file" id="fileInput" accept="image/*">
+  <div class="mt12 hidden" id="progressWrap">
+    <div class="progress-wrap">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">0%</div>
+    </div>
+  </div>
+  <button class="btn btn-success mt12 hidden" id="btnSend">Send to device</button>
+</div>
+
+<!-- Log card -->
+<div class="card">
+  <h2>Log</h2>
+  <div class="log" id="log">Ready.\n</div>
+</div>
+
+<script>
+// ─── UUIDs (must match ESP32) ─────────────────────────────────────────────
+const SVC_UUID    = '12345678-1234-1234-1234-123456789abc';
+const AUTH_UUID   = '12345678-1234-1234-1234-123456789ab0';
+const DATA_UUID   = '12345678-1234-1234-1234-123456789ab1';
+const STATUS_UUID = '12345678-1234-1234-1234-123456789ab2';
+
+const TARGET_W = 400, TARGET_H = 300;
+const CHUNK    = 512;
+
+// ─── State ────────────────────────────────────────────────────────────────
+let device=null, server=null, charAuth=null, charData=null, charStatus=null;
+let authed=false, selectedFile=null, sending=false;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
+function log(msg){ const el=document.getElementById('log'); el.textContent+=msg+'\n'; el.scrollTop=el.scrollHeight; }
+function setConnStatus(state){ // 'off' | 'on' | 'busy'
+  const dot=document.getElementById('connDot');
+  dot.className='status-dot dot-'+state;
+}
+function show(id){ document.getElementById(id).classList.remove('hidden'); }
+function hide(id){ document.getElementById(id).classList.add('hidden'); }
+function setLabel(id,txt){ document.getElementById(id).textContent=txt; }
+
+// ─── Image resize + compress ──────────────────────────────────────────────
+async function prepareImage(file){
+  const dither=true; // always dither for e-paper
+  const img=new Image(), url=URL.createObjectURL(file);
+  await new Promise((r,j)=>{img.onload=r;img.onerror=j;img.src=url;});
+  const c=document.createElement('canvas'); c.width=TARGET_W; c.height=TARGET_H;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='white'; ctx.fillRect(0,0,TARGET_W,TARGET_H);
+  const sc=Math.min(TARGET_W/img.width, TARGET_H/img.height);
+  const dw=Math.round(img.width*sc), dh=Math.round(img.height*sc);
+  ctx.drawImage(img, Math.floor((TARGET_W-dw)/2), Math.floor((TARGET_H-dh)/2), dw, dh);
+  URL.revokeObjectURL(url);
+  const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.88));
+  const buf=await blob.arrayBuffer();
+  return { bytes: new Uint8Array(buf), name: (file.name||'photo').replace(/\.[^.]+$/,'')+'.jpg' };
+}
+
+// ─── BLE send ─────────────────────────────────────────────────────────────
+async function sendChunked(bytes, name){
+  // Build header chunk: "PZ:<name>:<size>:<first_data...>"
+  const encoder=new TextEncoder();
+  const header=`PZ:${name}:${bytes.length}:`;
+  const headerBytes=encoder.encode(header);
+  const firstData=bytes.slice(0, CHUNK-headerBytes.length);
+  const firstChunk=new Uint8Array(headerBytes.length+firstData.length);
+  firstChunk.set(headerBytes); firstChunk.set(firstData, headerBytes.length);
+
+  await charData.writeValueWithoutResponse(firstChunk);
+  log(`Sent header + ${firstData.length}b`);
+
+  let offset=firstData.length;
+  while(offset<bytes.length){
+    const chunk=bytes.slice(offset, offset+CHUNK);
+    await charData.writeValueWithoutResponse(chunk);
+    offset+=chunk.length;
+    const pct=Math.round(offset*100/bytes.length);
+    document.getElementById('progressFill').style.width=pct+'%';
+    document.getElementById('progressLabel').textContent=pct+'% ('+offset+' / '+bytes.length+' bytes)';
+    // Small yield to keep UI alive
+    await new Promise(r=>setTimeout(r,10));
+  }
+  log('All chunks sent');
+}
+
+// ─── PIN UI ───────────────────────────────────────────────────────────────
+function buildPinGrid(options){
+  const grid=document.getElementById('pinGrid');
+  grid.innerHTML='';
+  options.forEach(pin=>{
+    const btn=document.createElement('button');
+    btn.className='pin-btn'; btn.textContent=pin;
+    btn.onclick=()=>submitPin(pin, btn, options);
+    grid.appendChild(btn);
+  });
+}
+
+async function submitPin(pin, btn, allBtns){
+  // Disable all buttons while waiting
+  document.querySelectorAll('.pin-btn').forEach(b=>b.style.pointerEvents='none');
+  const encoder=new TextEncoder();
+  try{
+    await charAuth.writeValueWithResponse(encoder.encode(String(pin)));
+    btn.classList.add('selected');
+    log('PIN submitted: '+pin);
+  } catch(e){
+    log('Write error: '+e);
+    document.querySelectorAll('.pin-btn').forEach(b=>b.style.pointerEvents='');
+  }
+}
+
+// ─── Status notifications ─────────────────────────────────────────────────
+function onStatus(event){
+  const decoder=new TextDecoder();
+  const msg=decoder.decode(event.target.value);
+  log('Status: '+msg);
+  if(msg.startsWith('OPTS:')){
+    // Device sent the 4 PIN options — build the grid
+    const nums=msg.substring(5).split(',').map(n=>parseInt(n.trim()));
+    buildPinGrid(nums);
+    document.getElementById('pinHint').textContent='Choose carefully — wrong answer disconnects.';
+    log('PIN options received — tap the code shown on the device screen.');
+    return;
+  }
+  if(msg==='AUTH:OK'){
+    authed=true;
+    document.querySelectorAll('.pin-btn.selected').forEach(b=>{
+      b.classList.remove('selected'); b.classList.add('correct');
+    });
+    setTimeout(()=>{ hide('cardPin'); show('cardFile'); }, 400);
+    setLabel('connLabel','Authenticated ✓');
+    setConnStatus('on');
+    log('✓ Authenticated — choose a photo');
+  } else if(msg==='AUTH:FAIL'){
+    // Mark the last attempted button wrong, re-enable rest
+    document.querySelectorAll('.pin-btn.selected').forEach(b=>{
+      b.classList.remove('selected'); b.classList.add('wrong');
+    });
+    document.querySelectorAll('.pin-btn').forEach(b=>b.style.pointerEvents='');
+    setLabel('pinHint','Wrong code — try another one.');
+    log('✗ Wrong PIN — try again');
+  } else if(msg.startsWith('DATA:OK')){
+    const recv=parseInt(msg.split(':')[2]||0);
+    log('Received by device: '+recv+' bytes');
+  } else if(msg==='DONE:converting'){
+    log('✓ Device is converting image...');
+    setConnStatus('on');
+    show('cardFile');
+    hide('progressWrap');
+    setLabel('fileLabel','✓ Done! Pick another photo to send again.');
+    document.getElementById('fileLabel').classList.remove('file-selected');
+    hide('btnSend');
+    selectedFile=null;
+    sending=false;
+  } else if(msg.startsWith('ERR')){
+    log('Device error: '+msg);
+    sending=false;
+    setConnStatus('on');
+  }
+}
+
+// ─── Connect ──────────────────────────────────────────────────────────────
+document.getElementById('btnConnect').onclick=async()=>{
+  if(!navigator.bluetooth){ log('Web Bluetooth not supported in this browser. Use Chrome on Android.'); return; }
+  try{
+    log('Scanning for ProjectZero...');
+    setConnStatus('busy');
+    device=await navigator.bluetooth.requestDevice({
+      filters:[{name:'ProjectZero'}],
+      optionalServices:[SVC_UUID]
+    });
+    device.addEventListener('gattserverdisconnected', onDisconnect);
+    log('Connecting...');
+    server=await device.gatt.connect();
+    log('Getting service...');
+    const svc=await server.getPrimaryService(SVC_UUID);
+    charAuth  =await svc.getCharacteristic(AUTH_UUID);
+    charData  =await svc.getCharacteristic(DATA_UUID);
+    charStatus=await svc.getCharacteristic(STATUS_UUID);
+    await charStatus.startNotifications();
+    charStatus.addEventListener('characteristicvaluechanged', onStatus);
+    setConnStatus('on');
+    setLabel('connLabel', 'Connected to '+device.name);
+    hide('cardConnect');
+    show('cardPin');
+    log('Connected — waiting for PIN options from device...');
+    document.getElementById('pinHint').textContent='Waiting for device to send options...';
+  } catch(e){
+    log('Error: '+e);
+    setConnStatus('off');
+  }
+};
+
+function onDisconnect(){
+  authed=false; sending=false;
+  setConnStatus('off');
+  setLabel('connLabel','Disconnected');
+  show('cardConnect');
+  hide('cardPin');
+  hide('cardFile');
+  hide('progressWrap');
+  log('Disconnected.');
+}
+
+// ─── File pick ────────────────────────────────────────────────────────────
+document.getElementById('fileInput').onchange=e=>{
+  selectedFile=e.target.files[0];
+  if(!selectedFile) return;
+  const lbl=document.getElementById('fileLabel');
+  lbl.textContent='📷 '+selectedFile.name;
+  lbl.classList.add('file-selected');
+  show('btnSend');
+};
+
+// ─── Send ─────────────────────────────────────────────────────────────────
+document.getElementById('btnSend').onclick=async()=>{
+  if(!selectedFile||sending) return;
+  sending=true;
+  setConnStatus('busy');
+  document.getElementById('btnSend').disabled=true;
+  try{
+    log('Preparing image...');
+    const {bytes, name}=await prepareImage(selectedFile);
+    log(`Resized to ${bytes.length} bytes → ${name}`);
+    show('progressWrap');
+    document.getElementById('progressFill').style.width='0%';
+    document.getElementById('progressLabel').textContent='0%';
+    await sendChunked(bytes, name);
+    log('Waiting for device confirmation...');
+  } catch(e){
+    log('Send error: '+e);
+    sending=false;
+    setConnStatus('on');
+    document.getElementById('btnSend').disabled=false;
+  }
+};
+</script>
+</body>
+</html>
