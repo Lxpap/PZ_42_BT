@@ -311,6 +311,14 @@ function onStatus(event){
   const decoder=new TextDecoder();
   const msg=decoder.decode(event.target.value);
   log('Status: '+msg);
+  if(msg.startsWith('OPTS:')){
+    // Device sent the 4 PIN options — build the grid
+    const nums=msg.substring(5).split(',').map(n=>parseInt(n.trim()));
+    buildPinGrid(nums);
+    document.getElementById('pinHint').textContent='Choose carefully — wrong answer disconnects.';
+    log('PIN options received — tap the code shown on the device screen.');
+    return;
+  }
   if(msg==='AUTH:OK'){
     authed=true;
     document.querySelectorAll('.pin-btn.selected').forEach(b=>{
@@ -372,18 +380,8 @@ document.getElementById('btnConnect').onclick=async()=>{
     setLabel('connLabel', 'Connected to '+device.name);
     hide('cardConnect');
     show('cardPin');
-    log('Connected — generating PIN options...');
-    // Generate 4 options: 1 correct + 3 random
-    // The correct PIN is shown on the device screen
-    // We generate plausible decoys on the phone side
-    const correct=null; // we don't know the correct PIN — user reads it from screen
-    const opts=[];
-    while(opts.length<4){
-      const n=Math.floor(Math.random()*9000)+1000;
-      if(!opts.includes(n)) opts.push(n);
-    }
-    buildPinGrid(opts);
-    log('Choose the code shown on the device screen.');
+    log('Connected — waiting for PIN options from device...');
+    document.getElementById('pinHint').textContent='Waiting for device to send options...';
   } catch(e){
     log('Error: '+e);
     setConnStatus('off');
